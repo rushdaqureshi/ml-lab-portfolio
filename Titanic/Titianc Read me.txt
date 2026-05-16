@@ -1,0 +1,192 @@
+####-Rushda Qureshi-msbwe2-2503951
+###Lab coding
+# ============================================
+# LAB 01: Data Loading and Cleaning - Titanic Dataset (Fixed)
+# ============================================
+
+import pandas as pd
+import numpy as np
+
+print("=" * 60)
+print("STEP 1: LOADING THE DATA")
+print("=" * 60)
+
+# Load the training data
+df_train = pd.read_csv('train.csv')
+print(f"Training data loaded: {df_train.shape[0]} rows, {df_train.shape[1]} columns")
+
+# Load the test data
+df_test = pd.read_csv('test.csv')
+print(f"Test data loaded: {df_test.shape[0]} rows, {df_test.shape[1]} columns")
+
+print("\n" + "=" * 60)
+print("STEP 2: FIRST LOOK AT THE DATA")
+print("=" * 60)
+
+print("\n--- Training Data Info ---")
+print(df_train.info())
+
+print("\n--- Missing Values in Training Data ---")
+missing_train = df_train.isna().sum()
+print(missing_train[missing_train > 0])
+
+print("\n" + "=" * 60)
+print("STEP 3: HANDLING MISSING VALUES")
+print("=" * 60)
+
+# Make a copy to work with
+df_train_clean = df_train.copy()
+
+# 3.1: Fix Age - Fixed: Removed inplace=True and used assignment
+age_median = df_train_clean['Age'].median()
+df_train_clean['Age'] = df_train_clean['Age'].fillna(age_median)
+print(f"✓ Filled missing Age values with median: {age_median}")
+
+# 3.2: Fix Embarked - Fixed: Removed inplace=True and used assignment
+embarked_mode = df_train_clean['Embarked'].mode()[0]
+df_train_clean['Embarked'] = df_train_clean['Embarked'].fillna(embarked_mode)
+print(f"✓ Filled missing Embarked values with mode: '{embarked_mode}'")
+
+# 3.3: Cabin - Drop column (inplace is still fine for drop() on a full DataFrame)
+df_train_clean.drop(columns=['Cabin'], inplace=True)
+print("✓ Dropped Cabin column")
+
+print("\n" + "=" * 60)
+print("STEP 4: CHECKING FOR DUPLICATES")
+print("=" * 60)
+
+duplicates = df_train_clean.duplicated().sum()
+if duplicates > 0:
+    df_train_clean.drop_duplicates(inplace=True)
+    print(f"✓ Removed {duplicates} duplicates")
+else:
+    print("No duplicates found.")
+
+print("\n" + "=" * 60)
+print("STEP 5: STANDARDIZING TEXT DATA")
+print("=" * 60)
+
+df_train_clean['Sex'] = df_train_clean['Sex'].str.lower()
+print("✓ Converted Sex column to lowercase")
+
+print("\n" + "=" * 60)
+print("STEP 6: SEPARATING FEATURES (X) AND TARGET (y)")
+print("=" * 60)
+
+target_col = 'Survived'
+identifiers = ['PassengerId', 'Name', 'Ticket']
+
+X = df_train_clean.drop(columns=identifiers + [target_col])
+y = df_train_clean[target_col]
+
+print(f"Features (X) shape: {X.shape}")
+print(f"Target (y) distribution:\n{y.value_counts()}")
+
+print("\n" + "=" * 60)
+print("STEP 7: SAVING THE CLEANED DATA")
+print("=" * 60)
+
+# Clean the test data using the SAME logic and assignment method
+df_test_clean = df_test.copy()
+
+# Fix Age and Fare in Test data using assignment
+df_test_clean['Age'] = df_test_clean['Age'].fillna(age_median)
+
+if df_test_clean['Fare'].isna().sum() > 0:
+    fare_median = df_test_clean['Fare'].median()
+    df_test_clean['Fare'] = df_test_clean['Fare'].fillna(fare_median)
+    print(f"✓ Filled missing Fare values in Test set")
+
+df_test_clean.drop(columns=['Cabin'], inplace=True)
+df_test_clean['Sex'] = df_test_clean['Sex'].str.lower()
+
+# Save files
+df_train_clean.to_csv('training_cleaned.csv', index=False)
+df_test_clean.to_csv('titanic_test_cleaned.csv', index=False)
+print("✓ Files saved successfully!")
+OUTPUT:
+============================================================
+STEP 1: LOADING THE DATA
+============================================================
+Training data loaded: 891 rows, 12 columns
+Test data loaded: 418 rows, 11 columns
+
+============================================================
+STEP 2: FIRST LOOK AT THE DATA
+============================================================
+
+--- Training Data Info ---
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 891 entries, 0 to 890
+Data columns (total 12 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   PassengerId  891 non-null    int64  
+ 1   Survived     891 non-null    int64  
+ 2   Pclass       891 non-null    int64  
+ 3   Name         891 non-null    object 
+ 4   Sex          891 non-null    object 
+ 5   Age          714 non-null    float64
+ 6   SibSp        891 non-null    int64  
+ 7   Parch        891 non-null    int64  
+ 8   Ticket       891 non-null    object 
+ 9   Fare         891 non-null    float64
+ 10  Cabin        204 non-null    object 
+ 11  Embarked     889 non-null    object 
+dtypes: float64(2), int64(5), object(5)
+memory usage: 83.7+ KB
+None
+
+--- Missing Values in Training Data ---
+Age         177
+Cabin       687
+Embarked      2
+dtype: int64
+
+============================================================
+STEP 3: HANDLING MISSING VALUES
+============================================================
+✓ Filled missing Age values with median: 28.0
+✓ Filled missing Embarked values with mode: 'S'
+✓ Dropped Cabin column
+
+============================================================
+STEP 4: CHECKING FOR DUPLICATES
+============================================================
+No duplicates found.
+
+============================================================
+STEP 5: STANDARDIZING TEXT DATA
+============================================================
+✓ Converted Sex column to lowercase
+
+============================================================
+STEP 6: SEPARATING FEATURES (X) AND TARGET (y)
+============================================================
+Features (X) shape: (891, 7)
+Target (y) distribution:
+Survived
+0    549
+1    342
+Name: count, dtype: int64
+
+============================================================
+STEP 7: SAVING THE CLEANED DATA
+============================================================
+✓ Filled missing Fare values in Test set
+✓ Files saved successfully!
+
+###-Points to wonder
+#########-IMPORTANCE OF CLASSIFICATION-#######
+###- After the data is cleaned in supervised leaning, the model wil use columns to find patterns. If it is extremly skewed then the model is biased.
+#########-AGE DIST AND MISSING VALUES-#######
+####- Though missing data can appear as random however it is to be noted that there are more missing points in 3rd class passengers leading to a recording bias against the,, as it appears that 1st class passengers were recorded perfectly.
+#########-GENDER CLASS -#######
+##3 in the initial observation, there is a strong corelation between female and 1st class and their survivall as they had better access to lifeboats.
+
+#####-QUESTION/ANSWER-########
+#####-Q1:  Why choose median imputation for Age rather than mean?
+###- Mean is sensitive to outliers and if the data is having very few elder passengers the mean would increase making look the average age of passenger is higher than what actuallly is, while Median is the middle value and is not affected by outliers.
+#####-Q2:What potential bias is introduced by filling missing embarkation ports with the most common value? How could this be mitigated?
+###- if we use common value then its going to effect our results for example if we label missing value by S port but in reality he/she boarded from C post and had a much higher rate, in this cass we have mislabeled the data.
+#-So we  can opt for mitigation meaning we will use a secific group like common port of all 1st class who paid the same fees. the same logic can be applied to other variables like ticket price.
