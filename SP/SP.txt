@@ -1,0 +1,194 @@
+####-Rushda Qureshi-msbwe2-2503951
+###Lab coding
+
+import pandas as pd
+import numpy as np
+
+# Load the dataset
+df = pd.read_csv('SP.csv')  # or use the full path if needed
+
+# Display first 5 rows
+df.head()
+Output
+
+	gender	race/ethnicity	parental level of education	lunch	test preparation course	math score	reading score	writing score
+0	female	group B	bachelor's degree	standard	none	72	72	74
+1	female	group C	some college	standard	completed	69	90	88
+2	female	group B	master's degree	standard	none	90	95	93
+3	male	group A	associate's degree	free/reduced	none	47	57	44
+4	male	group C	some college	standard	none	76	78	75
+
+
+# Check shape
+print("Shape:", df.shape)
+
+# Check data types and missing values
+df.info()
+
+# Check for missing values
+print("\nMissing values:\n", df.isna().sum())
+
+# Summary statistics for numerical columns
+df.describe()
+
+Output:
+Shape: (1000, 8)
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1000 entries, 0 to 999
+Data columns (total 8 columns):
+ #   Column                       Non-Null Count  Dtype 
+---  ------                       --------------  ----- 
+ 0   gender                       1000 non-null   object
+ 1   race/ethnicity               1000 non-null   object
+ 2   parental level of education  1000 non-null   object
+ 3   lunch                        1000 non-null   object
+ 4   test preparation course      1000 non-null   object
+ 5   math score                   1000 non-null   int64 
+ 6   reading score                1000 non-null   int64 
+ 7   writing score                1000 non-null   int64 
+dtypes: int64(3), object(5)
+memory usage: 62.6+ KB
+
+Missing values:
+ gender                         0
+race/ethnicity                 0
+parental level of education    0
+lunch                          0
+test preparation course        0
+math score                     0
+reading score                  0
+writing score                  0
+dtype: int64
+math score	reading score	writing score
+count	1000.00000	1000.000000	1000.000000
+mean	66.08900	69.169000	68.054000
+std	15.16308	14.600192	15.195657
+min	0.00000	17.000000	10.000000
+25%	57.00000	59.000000	57.750000
+50%	66.00000	70.000000	69.000000
+75%	77.00000	79.000000	79.000000
+max	100.00000	100.000000	100.000000
+
+
+# Check for duplicate rows
+duplicates = df.duplicated().sum()
+print(f"Number of duplicate rows: {duplicates}")
+
+# Remove duplicates if any
+if duplicates > 0:
+    df.drop_duplicates(inplace=True)
+    print("Duplicates removed.")
+else:
+    print("No duplicates found.")
+Output:
+Number of duplicate rows: 0
+No duplicates found.
+
+# Convert all column names to lowercase for consistency
+df.columns = df.columns.str.lower()
+print("Column names:", df.columns.tolist())
+Output:
+Column names: ['gender', 'race/ethnicity', 'parental level of education', 'lunch', 'test preparation course', 'math score', 'reading score', 'writing score']
+
+
+# Get all categorical (object type) columns
+categorical_cols = df.select_dtypes(include=['object']).columns
+print("Categorical columns:", list(categorical_cols))
+
+# Clean each one: strip spaces and convert to lowercase
+for col in categorical_cols:
+    df[col] = df[col].astype(str).str.strip().str.lower()
+
+# Verify
+print("\nUnique values in 'gender':", df['gender'].unique())
+print("Unique values in 'lunch':", df['lunch'].unique())
+print("Unique values in 'test preparation course':", df['test preparation course'].unique())
+
+Categorical columns: ['gender', 'race/ethnicity', 'parental level of education', 'lunch', 'test preparation course']
+
+Unique values in 'gender': ['female' 'male']
+Unique values in 'lunch': ['standard' 'free/reduced']
+Unique values in 'test preparation course': ['none' 'completed']
+
+
+# Choose one subject as target
+target_col = 'math score'  # or 'reading score' or 'writing score'
+
+# OR create an average score
+df['avg_score'] = (df['math score'] + df['reading score'] + df['writing score']) / 3
+target_col = 'avg_score'
+
+
+# Create average score first
+df['avg_score'] = (df['math score'] + df['reading score'] + df['writing score']) / 3
+
+# Create categories based on average score
+def categorize_score(score):
+    if score >= 80:
+        return 'high'
+    elif score >= 60:
+        return 'medium'
+    else:
+        return 'low'
+
+df['performance'] = df['avg_score'].apply(categorize_score)
+target_col = 'performance'
+
+# Define target column (choose one based on Step 6)
+target_col = 'performance'  # or 'math score' or 'avg_score'
+
+# Define columns to drop (target + any non-predictive columns)
+# For this dataset, all columns except target can be features
+columns_to_drop = [target_col]
+
+# If you created 'avg_score', drop it from features (keep only original scores)
+if 'avg_score' in df.columns:
+    columns_to_drop.append('avg_score')
+
+# Create feature matrix X
+X = df.drop(columns=columns_to_drop)
+
+# Create target vector y
+y = df[target_col]
+
+# Verify shapes
+print("Features shape:", X.shape)
+print("Target shape:", y.shape)
+print("\nFeatures:", list(X.columns))
+print("\nTarget distribution:")
+print(y.value_counts())
+
+Output:
+Features shape: (1000, 8)
+Target shape: (1000,)
+
+Features: ['gender', 'race/ethnicity', 'parental level of education', 'lunch', 'test preparation course', 'math score', 'reading score', 'writing score']
+
+Target distribution:
+performance
+medium    517
+low       285
+high      198
+Name: count, dtype: int64
+
+
+# Save the cleaned DataFrame
+output_path = 'student_performance_cleaned.csv'
+df.to_csv(output_path, index=False)
+print(f"Cleaned data saved to {output_path}")
+
+Output:
+Cleaned data saved to student_performance_cleaned.csv
+
+####-Points to remeber
+###-1-in normal dist, the students scores are usually around the mean but if we look at the left skew, it can be noted that a small group of students perform below the mean and some maintain 100.
+##-2-the data is basically clean as it does not have issing values so we can skip imputation step and focus on the analysis.
+###3- Regression results will provide you will continous numerical value which is useful in case of precision but when stakeholders are concerned, they can understand categories better than the numerical values and classification helps us to assing bands/categories to the numerical values.
+
+
+
+#####-QUESTION ANSWER-###
+##-1- If you create a new categorical target based on average scores, how many classes would you choose and why?
+##- it is easy to choose 3 classes as the dataset is well balanced becuase if we choose too many classes each category becomes small for model to learn patterns.
+##-2-Why is it important to check for duplicate rows even when a dataset is considered clean?
+##- A clean dataset can still include duplicates is a record is complete but appears 5 times then the model will over learn the feautures and will lead to a type od data leakage  making the model appear model accurate than it is, drawback is that the model will perform porly on new data.
