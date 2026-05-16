@@ -1,0 +1,225 @@
+####-Rushda Qureshi-msbwe2-2503951
+###Lab coding
+## Load libraries
+import pandas as pd
+import numpy as np
+# Load the dataset
+df = pd.read_csv('TCC.csv')
+
+# Display first 5 rows
+df.head()
+Output:
+	customerID	gender	SeniorCitizen	Partner	Dependents	tenure	PhoneService	MultipleLines	InternetService	OnlineSecurity	...	DeviceProtection	TechSupport	StreamingTV	StreamingMovies	Contract	PaperlessBilling	PaymentMethod	MonthlyCharges	TotalCharges	Churn
+0	7590-VHVEG	Female	0	Yes	No	1	No	No phone service	DSL	No	...	No	No	No	No	Month-to-month	Yes	Electronic check	29.85	29.85	No
+1	5575-GNVDE	Male	0	No	No	34	Yes	No	DSL	Yes	...	Yes	No	No	No	One year	No	Mailed check	56.95	1889.5	No
+2	3668-QPYBK	Male	0	No	No	2	Yes	No	DSL	Yes	...	No	No	No	No	Month-to-month	Yes	Mailed check	53.85	108.15	Yes
+3	7795-CFOCW	Male	0	No	No	45	No	No phone service	DSL	Yes	...	Yes	Yes	No	No	One year	No	Bank transfer (automatic)	42.30	1840.75	No
+4	9237-HQITU	Female	0	No	No	2	Yes	No	Fiber optic	No	...	No	No	No	No	Month-to-month	Yes	Electronic check	70.70	151.65	Yes
+# Check shape (rows, columns)
+print("Shape:", df.shape)
+
+# Check data types and missing values
+df.info()
+Output
+Shape: (7043, 21)
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 7043 entries, 0 to 7042
+Data columns (total 21 columns):
+ #   Column            Non-Null Count  Dtype  
+---  ------            --------------  -----  
+ 0   customerID        7043 non-null   object 
+ 1   gender            7043 non-null   object 
+ 2   SeniorCitizen     7043 non-null   int64  
+ 3   Partner           7043 non-null   object 
+ 4   Dependents        7043 non-null   object 
+ 5   tenure            7043 non-null   int64  
+ 6   PhoneService      7043 non-null   object 
+ 7   MultipleLines     7043 non-null   object 
+ 8   InternetService   7043 non-null   object 
+ 9   OnlineSecurity    7043 non-null   object 
+ 10  OnlineBackup      7043 non-null   object 
+ 11  DeviceProtection  7043 non-null   object 
+ 12  TechSupport       7043 non-null   object 
+ 13  StreamingTV       7043 non-null   object 
+ 14  StreamingMovies   7043 non-null   object 
+ 15  Contract          7043 non-null   object 
+ 16  PaperlessBilling  7043 non-null   object 
+ 17  PaymentMethod     7043 non-null   object 
+ 18  MonthlyCharges    7043 non-null   float64
+ 19  TotalCharges      7043 non-null   object 
+ 20  Churn             7043 non-null   object 
+dtypes: float64(1), int64(2), object(18)
+memory usage: 1.1+ MB
+
+# Summary statistics for numerical columns
+df.describe()
+
+Output:
+	SeniorCitizen	tenure	MonthlyCharges
+count	7043.000000	7043.000000	7043.000000
+mean	0.162147	32.371149	64.761692
+std	0.368612	24.559481	30.090047
+min	0.000000	0.000000	18.250000
+25%	0.000000	9.000000	35.500000
+50%	0.000000	29.000000	70.350000
+75%	0.000000	55.000000	89.850000
+max	1.000000	72.000000	118.750000
+
+
+
+# Check for missing values
+df.isna().sum()
+
+Output:
+customerID          0
+gender              0
+SeniorCitizen       0
+Partner             0
+Dependents          0
+tenure              0
+PhoneService        0
+MultipleLines       0
+InternetService     0
+OnlineSecurity      0
+OnlineBackup        0
+DeviceProtection    0
+TechSupport         0
+StreamingTV         0
+StreamingMovies     0
+Contract            0
+PaperlessBilling    0
+PaymentMethod       0
+MonthlyCharges      0
+TotalCharges        0
+Churn               0
+dtype: int64
+
+# Convert TotalCharges to numeric (bad values become NaN)
+df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
+
+# Check how many NaN values now exist
+print("Missing TotalCharges:", df['TotalCharges'].isna().sum())
+
+# Fill missing values with median
+median_charges = df['TotalCharges'].median()
+
+# FIX: Use direct assignment instead of inplace=True
+df['TotalCharges'] = df['TotalCharges'].fillna(median_charges)
+
+# Verify no missing values remain
+print("After imputation:", df['TotalCharges'].isna().sum())
+
+# FIRST: Make all column names lowercase (makes life easier)
+df.columns = df.columns.str.lower()
+
+# SECOND: Now get categorical columns (all object types)
+categorical_cols = df.select_dtypes(include=['object']).columns
+
+# THIRD: Clean each categorical column
+for col in categorical_cols:
+    df[col] = df[col].astype(str).str.strip().str.lower()
+
+# FOURTH: Verify by checking unique values
+print("Payment method unique values:", df['paymentmethod'].unique())
+print("Contract type unique values:", df['contract'].unique())
+Result
+Payment method unique values: ['electronic check' 'mailed check' 'bank transfer (automatic)'
+ 'credit card (automatic)']
+Contract type unique values: ['month-to-month' 'one year' 'two year']
+
+
+
+# Count duplicate rows
+duplicates = df.duplicated().sum()
+print(f"Number of duplicate rows: {duplicates}")
+
+# Remove duplicates if any
+if duplicates > 0:
+    df.drop_duplicates(inplace=True)
+    print("Duplicates removed.")
+else:
+    print("No duplicates found.")
+
+# Define target column (use lowercase!)
+target_col = 'churn'
+
+# Define columns to drop (use lowercase!)
+columns_to_drop = ['customerid', target_col]
+
+# Create feature matrix X (all columns except dropped ones)
+X = df.drop(columns=columns_to_drop)
+
+# Create target vector y
+y = df[target_col]
+
+# Verify shapes
+print("Features shape:", X.shape)
+print("Target shape:", y.shape)
+print("\nFeatures:", list(X.columns))
+print("\nTarget value counts:")
+print(y.value_counts())
+
+
+Output
+Features shape: (7043, 19)
+Target shape: (7043,)
+
+Features: ['gender', 'seniorcitizen', 'partner', 'dependents', 'tenure', 'phoneservice', 'multiplelines', 'internetservice', 'onlinesecurity', 'onlinebackup', 'deviceprotection', 'techsupport', 'streamingtv', 'streamingmovies', 'contract', 'paperlessbilling', 'paymentmethod', 'monthlycharges', 'totalcharges']
+
+Target value counts:
+churn
+no     5174
+yes    1869
+Name: count, dtype: int64
+
+
+# Save the cleaned DataFrame (including target) for later use
+output_path = 'TCC.csv'  # Saves in the same folder as your notebook
+df.to_csv(output_path, index=False)
+print(f"Cleaned data saved to {output_path}")
+
+## Summary of Cleaning Steps
+# 2. Fixed totalcharges column
+# Use lowercase 'totalcharges' because you standardized names earlier
+df['totalcharges'] = pd.to_numeric(df['totalcharges'], errors='coerce')
+
+# Fill missing values with median (using direct assignment)
+median_value = df['totalcharges'].median()
+df['totalcharges'] = df['totalcharges'].fillna(median_value)
+
+# 3. Standardized categorical columns
+# Note: df.columns is already lowercase from your previous step!
+categorical_cols = df.select_dtypes(include=['object']).columns
+for col in categorical_cols:
+    df[col] = df[col].astype(str).str.strip().str.lower()
+
+# 4. Checked for duplicates
+duplicates = df.duplicated().sum()
+if duplicates > 0:
+    df = df.drop_duplicates()
+    print(f"Removed {duplicates} duplicates.")
+else:
+    print("No duplicates found.")
+
+# 5. Separated features and target
+target = 'churn'
+# Use lowercase 'customerid'
+X = df.drop(columns=['customerid', target])
+y = df[target]
+
+# 6. Saved cleaned data
+df.to_csv('telco_cleaned.csv', index=False)
+
+print("Final Summary: Data cleaned and saved.")
+Result:
+No duplicates found.
+Final Summary: Data cleaned and saved.
+
+####- IMP POINTS-
+### variable named" customer id" is a unique row and adding this in the model will lead to overfitting as the model can learn the ids of people who churned  and will provide 0 predictive value to the new customer with new id.
+####- in churn predictions we can have 2 types of errors: False Negative and False positive. False positive is also known as type 2 error and it siworse becuase if it predicts that a customer leaves and didnts, the business might have spend a small a small amount by giving the person discount.
+###-Question Answer-##
+##-1-Why is it important to standardize categorical values (e.g., lowercase) before encoding?
+###- We need to standard as the machine can treat Fibre Optioc, fibre optic and Fiber optics are 3 different categories increasing models complexity . Standardizing will prevent all this and make all the d/f variabtions into 1 feature.
+##-2-How could we address class imbalance when training models later on?
+####-  We only have 2 clases Churners and non churners, so we can use resample (oversampling the minority class, SMOTE or undersampling majority class) or adjusting weights by declaring missing a churner is worse than misclassifying and by using evaluation metrics like precision, recall, and F1 score.
